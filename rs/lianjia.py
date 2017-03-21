@@ -8,24 +8,8 @@ from bs4 import BeautifulSoup
 from influxdb import InfluxDBClient
 import urllib2
 import yaml
+import socket
 
-
-template = {
-    "measurement": "RealEstate",
-    "tags": {
-        "agent": "",
-        "city": "city",
-        "distinct": "zone",    
-        "area": ""
-    },
-    "fields": {
-        "avgPrice": 1,
-        "sailCount": 20,
-        "in90": 20,
-        "viewCount": 20
-    }
-}
-    
 def load():
     f = open('cities.yml')
     x = yaml.load(f)
@@ -52,7 +36,9 @@ def parsePage(client, url, cityName, distinct = "all", area = "all"):
         sailCount = spans[1].find("strong").text
         in90 = spans[2].find("strong").text
         viewCount = spans[3].find("strong").text
-    tags=template["tags"]
+    houseTemplate={}
+    houseTemplate["measurement"]="HouseSales"
+    tags={}
     tags["agent"] = settings["agents"]["lj"]
     tags["city"] = cityName
     if distinct == "all":
@@ -62,13 +48,16 @@ def parsePage(client, url, cityName, distinct = "all", area = "all"):
     if area == "all":
         tags["area"] = settings["words"]["all"]
     else:
-        tags["area"] = area    
-    fields=template["fields"]
+        tags["area"] = area  
+    houseTemplate["tags"]  = tags
+    fields = {}
     fields["avgPrice"] = int(avgPrice)
     fields["sailCount"] = int(sailCount)
     fields["in90"] = int(in90)
     fields["viewCount"] = int(viewCount)
-    client.write_points([template])
+    houseTemplate["fields"]  = fields
+    client.write_points([houseTemplate])
+    print houseTemplate
     return soup
     
 def parseDistinct(soup, client, city):
@@ -98,7 +87,11 @@ def parseCity(client, city):
     pass
     
 if __name__ == '__main__':
-    client = InfluxDBClient('10.58.80.137', 8086, '', '', 'RealEstate')
+    hostname = socket.gethostname()
+    if hostname == "WAGAN":
+        client = InfluxDBClient('127.0.0.1', 8086, '', '', 'RealEstate')
+    else:
+        client = InfluxDBClient('10.58.80.137', 8086, '', '', 'RealEstate')
     for city in settings["cities"]:
         parseCity(client, city)
         pass
