@@ -1,0 +1,7 @@
+words:
+  all: 所有
+agents:
+  lj: 链家
+cities:    
+  - name: 上海
+    lj: sh
