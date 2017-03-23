@@ -110,7 +110,7 @@ if __name__ == '__main__':
     if hostname == "WAGAN":
         client = InfluxDBClient('127.0.0.1', 8086, '', '', 'RealEstate')
     else:
-        client = InfluxDBClient('10.58.80.137', 8086, '', '', 'RealEstate')
+        client = InfluxDBClient('10.58.80.214', 8086, '', '', 'RealEstate')
     for city in settings["cities"]:
         parseCity(client, city)
         pass

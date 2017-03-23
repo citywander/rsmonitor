@@ -1,8 +1,8 @@
 {
   "__inputs": [
     {
-      "name": "DS_REALESTATE",
-      "label": "RealEstate",
+      "name": "DS_HOUSEKEEPER",
+      "label": "HouseKeeper",
       "description": "",
       "type": "datasource",
       "pluginId": "influxdb",
@@ -47,7 +47,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": "${DS_REALESTATE}",
+          "datasource": "${DS_HOUSEKEEPER}",
           "fill": 1,
           "hideTimeOverride": false,
           "id": 1,
@@ -69,18 +69,21 @@
           "nullPointMode": "null",
           "percentage": false,
           "pointradius": 5,
-          "points": false,
+          "points": true,
           "renderer": "flot",
           "seriesOverrides": [],
-          "span": 12,
+          "span": 6,
           "stack": true,
           "steppedLine": false,
           "targets": [
             {
+              "alias": "挂牌量",
               "dsType": "influxdb",
               "groupBy": [],
               "measurement": "HouseSales",
               "policy": "default",
+              "query": "SELECT \"sailCount\" FROM \"HouseSales\" WHERE \"city\" =~ /^$city$/ AND \"area\" =~ /^$area$/ AND \"distinct\" =~ /^$distinct$/ AND \"village\" =~ /^$village$/ AND $timeFilter",
+              "rawQuery": true,
               "refId": "A",
               "resultFormat": "time_series",
               "select": [
@@ -110,6 +113,12 @@
                   "key": "distinct",
                   "operator": "=~",
                   "value": "/^$distinct$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "village",
+                  "operator": "=~",
+                  "value": "/^$village$/"
                 }
               ]
             }
@@ -148,6 +157,277 @@
               "show": true
             }
           ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "${DS_HOUSEKEEPER}",
+          "fill": 1,
+          "id": 2,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": true,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "带看量",
+              "dsType": "influxdb",
+              "groupBy": [],
+              "measurement": "HouseSales",
+              "policy": "default",
+              "query": "SELECT \"viewCount\" FROM \"HouseSales\"  WHERE \"city\" =~ /^$city$/ AND \"area\" =~ /^$area$/ AND \"distinct\" =~ /^$distinct$/ AND \"village\" =~ /^$village$/ AND $timeFilter",
+              "rawQuery": true,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "viewCount"
+                    ],
+                    "type": "field"
+                  }
+                ]
+              ],
+              "tags": []
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "带看量",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": false,
+      "title": "Dashboard Row",
+      "titleSize": "h6"
+    },
+    {
+      "collapse": false,
+      "height": 250,
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "${DS_HOUSEKEEPER}",
+          "fill": 1,
+          "id": 3,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "rightSide": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": true,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "成交量",
+              "dsType": "influxdb",
+              "groupBy": [],
+              "measurement": "HouseSales",
+              "policy": "default",
+              "query": "SELECT \"in90\" FROM \"HouseSales\"  WHERE \"city\" =~ /^$city$/ AND \"area\" =~ /^$area$/ AND \"distinct\" =~ /^$distinct$/ AND \"village\" =~ /^$village$/ AND $timeFilter",
+              "rawQuery": true,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "in90"
+                    ],
+                    "type": "field"
+                  }
+                ]
+              ],
+              "tags": []
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "90天成交量",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "${DS_HOUSEKEEPER}",
+          "fill": 1,
+          "id": 4,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": true,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "平均成交价格",
+              "dsType": "influxdb",
+              "groupBy": [],
+              "measurement": "HouseSales",
+              "policy": "default",
+              "query": "SELECT \"avgPrice\" FROM \"HouseSales\" WHERE  \"city\" =~ /^$city$/ AND \"area\" =~ /^$area$/ AND \"distinct\" =~ /^$distinct$/ AND \"village\" =~ /^$village$/ AND $timeFilter",
+              "rawQuery": true,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "avgPrice"
+                    ],
+                    "type": "field"
+                  }
+                ]
+              ],
+              "tags": []
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "平均挂牌价（元）",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
         }
       ],
       "repeat": null,
@@ -166,7 +446,7 @@
       {
         "allValue": null,
         "current": {},
-        "datasource": "${DS_REALESTATE}",
+        "datasource": "${DS_HOUSEKEEPER}",
         "hide": 0,
         "includeAll": false,
         "label": "城市",
@@ -186,7 +466,7 @@
       {
         "allValue": null,
         "current": {},
-        "datasource": "${DS_REALESTATE}",
+        "datasource": "${DS_HOUSEKEEPER}",
         "hide": 0,
         "includeAll": false,
         "label": "区",
@@ -206,7 +486,7 @@
       {
         "allValue": null,
         "current": {},
-        "datasource": "${DS_REALESTATE}",
+        "datasource": "${DS_HOUSEKEEPER}",
         "hide": 0,
         "includeAll": false,
         "label": "街道",
@@ -222,12 +502,32 @@
         "tagsQuery": "",
         "type": "query",
         "useTags": false
+      },
+      {
+        "allValue": null,
+        "current": {},
+        "datasource": "${DS_HOUSEKEEPER}",
+        "hide": 0,
+        "includeAll": false,
+        "label": "小区",
+        "multi": false,
+        "name": "village",
+        "options": [],
+        "query": "SHOW TAG VALUES WITH KEY = \"village\" WHERE \"area\" =~ /^$area$/ ",
+        "refresh": 1,
+        "regex": "",
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
       }
     ]
   },
   "time": {
-    "from": "2017-03-21T12:30:10.481Z",
-    "to": "2017-03-21T13:03:46.678Z"
+    "from": "2017-03-20T15:04:49.734Z",
+    "to": "2017-03-23T21:32:45.685Z"
   },
   "timepicker": {
     "refresh_intervals": [
@@ -256,5 +556,5 @@
   },
   "timezone": "browser",
   "title": "二手房屋数据",
-  "version": 21
+  "version": 16
 }
