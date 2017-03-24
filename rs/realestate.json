@@ -27,6 +27,12 @@
       "id": "influxdb",
       "name": "InfluxDB",
       "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "table",
+      "name": "Table",
+      "version": ""
     }
   ],
   "annotations": {
@@ -65,7 +71,22 @@
           },
           "lines": true,
           "linewidth": 1,
-          "links": [],
+          "links": [
+            {
+              "includeVars": false,
+              "keepTime": false,
+              "targetBlank": true,
+              "title": "跳到链家-街道",
+              "type": "absolute",
+              "url": "http://sh.lianjia.com/ershoufang/rs$area"
+            },
+            {
+              "targetBlank": true,
+              "title": "跳到链家-小区",
+              "type": "absolute",
+              "url": "http://sh.lianjia.com/ershoufang/rs$village"
+            }
+          ],
           "nullPointMode": "null",
           "percentage": false,
           "pointradius": 5,
@@ -436,6 +457,143 @@
       "showTitle": false,
       "title": "Dashboard Row",
       "titleSize": "h6"
+    },
+    {
+      "collapse": false,
+      "height": 250,
+      "panels": [
+        {
+          "columns": [],
+          "datasource": "${DS_HOUSEKEEPER}",
+          "fontSize": "100%",
+          "id": 5,
+          "pageSize": 10,
+          "scroll": true,
+          "showHeader": true,
+          "sort": {
+            "col": 8,
+            "desc": true
+          },
+          "span": 12,
+          "styles": [
+            {
+              "colorMode": null,
+              "colors": [
+                "rgba(245, 54, 54, 0.9)",
+                "rgba(237, 129, 40, 0.89)",
+                "rgba(50, 172, 45, 0.97)"
+              ],
+              "dateFormat": "YYYY-MM-DD HH:mm:ss",
+              "decimals": 2,
+              "pattern": "count",
+              "thresholds": [],
+              "type": "number",
+              "unit": "none"
+            },
+            {
+              "colorMode": null,
+              "colors": [
+                "rgba(245, 54, 54, 0.9)",
+                "rgba(237, 129, 40, 0.89)",
+                "rgba(50, 172, 45, 0.97)"
+              ],
+              "dateFormat": "YYYY-MM-DD HH:mm:ss",
+              "decimals": 2,
+              "pattern": "Time",
+              "thresholds": [],
+              "type": "date",
+              "unit": "short"
+            }
+          ],
+          "targets": [
+            {
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "1d"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "area"
+                  ],
+                  "type": "tag"
+                },
+                {
+                  "params": [
+                    "city"
+                  ],
+                  "type": "tag"
+                },
+                {
+                  "params": [
+                    "distinct"
+                  ],
+                  "type": "tag"
+                }
+              ],
+              "measurement": "HouseSales",
+              "policy": "default",
+              "refId": "A",
+              "resultFormat": "table",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "sailCount"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "last"
+                  },
+                  {
+                    "params": [],
+                    "type": "difference"
+                  },
+                  {
+                    "params": [
+                      "count"
+                    ],
+                    "type": "alias"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "area",
+                  "operator": "=~",
+                  "value": "/^$area$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "city",
+                  "operator": "=~",
+                  "value": "/^$city$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "distinct",
+                  "operator": "=~",
+                  "value": "/^$distinct$/"
+                }
+              ]
+            }
+          ],
+          "title": "Panel Title",
+          "transform": "table",
+          "type": "table"
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": false,
+      "title": "Dashboard Row",
+      "titleSize": "h6"
     }
   ],
   "schemaVersion": 14,
@@ -526,8 +684,8 @@
     ]
   },
   "time": {
-    "from": "2017-03-20T15:04:49.734Z",
-    "to": "2017-03-23T21:32:45.685Z"
+    "from": "now/w",
+    "to": "now/w"
   },
   "timepicker": {
     "refresh_intervals": [
@@ -556,5 +714,5 @@
   },
   "timezone": "browser",
   "title": "二手房屋数据",
-  "version": 16
+  "version": 22
 }
