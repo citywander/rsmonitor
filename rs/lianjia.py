@@ -10,6 +10,10 @@ import urllib2
 import yaml
 import socket
 import json
+import mysql.connector
+
+access_token="7poanTTBCymmgE0FOn1oKp"
+
 
 def load():
     f = open('cities.yml')
@@ -91,8 +95,7 @@ def parseCity(client, city):
     parseDistinct(soup, client, city)
     pass
 
-def parseMap(city, distinct):
-    access_token="7poanTTBCymmgE0FOn1oKp"
+def parseMap(city, distinct):    
     url="http://soa.dooioo.com/api/v4/online/house/ershoufang/listMapResult?access_token=%s&cityCode=%s&type=village&dataId=%s"
     url = url % (access_token, city, distinct)
     page = urllib2.urlopen(url)
@@ -105,6 +108,18 @@ def parseVillage(client, city, distinct, area, distinctCode):
         parsePage(client, baseUrl, city["name"], distinct, area, village["showName"])
     pass
 
+def parseHouse():
+    pass
+
+def insertDistrict():
+    pass
+
+def insertArea():
+    pass
+
+def insertHouse():
+    passl
+
 if __name__ == '__main__':
     hostname = socket.gethostname()
     if hostname == "WAGAN":
@@ -114,6 +129,7 @@ if __name__ == '__main__':
     for city in settings["cities"]:
         parseCity(client, city)
         pass
+    
     '''result = client.query('select * from "HouseSales";')
     for oneRecord in result:
         for onecity in oneRecord:
