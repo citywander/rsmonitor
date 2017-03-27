@@ -4,8 +4,6 @@ Created on Mar 20, 2017
 @author: I076054
 
 '''
-from bs4 import BeautifulSoup
-from influxdb import InfluxDBClient
 import urllib2
 import yaml
 import socket
@@ -53,16 +51,6 @@ def parseMap(city, dateId, siteType, type):
     page = urllib2.urlopen(url)
     return json.load(page)["dataList"]
     
-def parseVillage(client, city, distinct, area, distinctCode):
-    villages = parseMap(city["lj"], distinctCode)
-    for village in villages:
-        baseUrl = "http://" + city["lj"] + ".lianjia.com/ershoufang/q" + village["dataId"]
-        parsePage(client, baseUrl, city["name"], distinct, area, village["showName"])
-    pass
-
-def parseHouse():
-    pass
-
 def insertDistrict(cursor):
     districts = parseMap("sh", "sh", "quyu", "district")
     for district in districts:
@@ -130,37 +118,37 @@ def updateDetailVillage(conn, cursor):
         url="http://soa.dooioo.com/api/v4/online/house/ershoufang/search?access_token=%s&cityCode=sh&community_id=%s&limit_offset=1&limit_count=500"
         url = url % (access_token, k)
         page = urllib2.urlopen(url)
-        property = json.load(page)["data"]["property"]
-        print property["propertyAddress"]
-        if not "devCompany" in property:
-            property["devCompany"] = ""
-        if not "mgtCompany" in property:
-            property["mgtCompany"] = ""
-        if not "completeYear" in property:
-            property["completeYear"] = ""            
-        if not "cycleLine" in property:
-            property["cycleLine"] = "" 
+        prop = json.load(page)["data"]["prop"]
+        print prop["propertyAddress"]
+        if not "devCompany" in prop:
+            prop["devCompany"] = ""
+        if not "mgtCompany" in prop:
+            prop["mgtCompany"] = ""
+        if not "completeYear" in prop:
+            prop["completeYear"] = ""            
+        if not "cycleLine" in prop:
+            prop["cycleLine"] = "" 
         data_village = {
           'code': k,
-          'complete_year': property["completeYear"],
-          'cycle_line': property["cycleLine"],
-          'dev_company': property["devCompany"],
-          'property_type': property["houseType2"],
-          'mgt_company': property["mgtCompany"],
-          'web_url': property["webUrl"],
-          'buiding_count': property["buildingCount"],
-          'property_count': property["totalRooms"],
-          'address': property["propertyAddress"]
+          'complete_year': prop["completeYear"],
+          'cycle_line': prop["cycleLine"],
+          'dev_company': prop["devCompany"],
+          'property_type': prop["houseType2"],
+          'mgt_company': prop["mgtCompany"],
+          'web_url': prop["webUrl"],
+          'buiding_count': prop["buildingCount"],
+          'property_count': prop["totalRooms"],
+          'address': prop["propertyAddress"]
         }
         cursor.execute(update_detail_village, data_village)   
         conn.commit()
         
 def getHouses(cursor):
-    houses=set()
-    query = ("SELECT code FROM house where saled_date is null")
+    houses={}
+    query = ("SELECT code,saled_date FROM house")
     cursor.execute(query)
-    for (code,) in cursor:
-        houses.add(code)
+    for (code,saled_date) in cursor:
+        houses[code] = saled_date is None
     return houses     
 
 def insertHouse(conn, cursor):
@@ -172,31 +160,30 @@ def insertHouse(conn, cursor):
         url = url % (access_token, k)
         page = urllib2.urlopen(url)
         properties = json.load(page)["data"]["list"]
-        for property in properties:
-            code = property["houseSellId"]
-            tags = property["tags"]
-            if "face" not in property:
-                property["face"] = ""
+        for prop in properties:
+            code = prop["houseSellId"]
+            tags = prop["tags"]
+            if "face" not in prop:
+                prop["face"] = ""
             data_house = {
               'village_id': v,
               'code': code,
-              'title': property["title"],
-              'face': property["face"],
-              'floor_state': property["floor_state"],
+              'title': prop["title"],
+              'face': prop["face"],
+              'floor_state': prop["floor_state"],
               'is_five': "is_five_year" in tags,
               'is_new': "is_new_house_source" in tags,
-              'room': property["room"],
-              'hall': property["hall"],
-              'price': property["showPrice"],
+              'room': prop["room"],
+              'hall': prop["hall"],
+              'price': prop["showPrice"],
               'login_date': now.strftime('%Y-%m-%d %H:%M:%S'),
-              'acreage': property["acreage"]
+              'acreage': prop["acreage"]
             }
             if not code in houseCodes:
                 cursor.execute(add_house, data_house)
-            else:
-                houseCodes.remove(code)
+            elif houseCodes[code]:
+                del houseCodes[code]
         conn.commit()
-    print houseCodes
     for code in houseCodes:
         update_house_data = {
             'code': code,
@@ -208,31 +195,14 @@ def insertHouse(conn, cursor):
 
 
 if __name__ == '__main__':
-    conn = mysql.connector.connect(host='192.168.1.50', port = 13306,user='root',passwd='Initial0',db='realestate')
+    hostname = socket.gethostname()
+    if hostname == "WAGAN":
+        conn = mysql.connector.connect(host='192.168.1.50', port = 13306,user='root',passwd='Initial0',db='realestate')
+    else:
+        conn = mysql.connector.connect(host='10.58.81.211', port = 3306,user='root',passwd='Initial0',db='realestate')
     cursor = conn.cursor()
-    #insertVillage(areas)
     insertHouse(conn, cursor)
     conn.commit()
     cursor.close()
     conn.close()
-    '''result = client.query('select * from "HouseSales";')
-    for oneRecord in result:
-        for onecity in oneRecord:
-                houseTemplate={}
-                houseTemplate["measurement"]="HouseSales"
-                tags={}
-                tags["agent"] = onecity["agent"]
-                tags["city"] = onecity["city"]
-                tags["distinct"] = onecity["distinct"]
-                tags["area"] = onecity["area"]
-                tags["village"] = settings["words"]["all"]
-                houseTemplate["tags"]  = tags
-                fields = {}
-                fields["avgPrice"] = onecity["avgPrice"]
-                fields["sailCount"] = onecity["sailCount"]
-                fields["in90"] = onecity["in90"]
-                fields["viewCount"] = onecity["viewCount"]
-                houseTemplate["time"] = str(onecity["time"])
-                houseTemplate["fields"]  = fields
-                client.write_points([houseTemplate])'''
     pass

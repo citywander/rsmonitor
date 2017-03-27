@@ -10,7 +10,6 @@ import urllib2
 import yaml
 import socket
 import json
-import mysql.connector
 
 access_token="7poanTTBCymmgE0FOn1oKp"
 
@@ -108,18 +107,6 @@ def parseVillage(client, city, distinct, area, distinctCode):
         parsePage(client, baseUrl, city["name"], distinct, area, village["showName"])
     pass
 
-def parseHouse():
-    pass
-
-def insertDistrict():
-    pass
-
-def insertArea():
-    pass
-
-def insertHouse():
-    passl
-
 if __name__ == '__main__':
     hostname = socket.gethostname()
     if hostname == "WAGAN":
@@ -129,25 +116,4 @@ if __name__ == '__main__':
     for city in settings["cities"]:
         parseCity(client, city)
         pass
-    
-    '''result = client.query('select * from "HouseSales";')
-    for oneRecord in result:
-        for onecity in oneRecord:
-                houseTemplate={}
-                houseTemplate["measurement"]="HouseSales"
-                tags={}
-                tags["agent"] = onecity["agent"]
-                tags["city"] = onecity["city"]
-                tags["distinct"] = onecity["distinct"]
-                tags["area"] = onecity["area"]
-                tags["village"] = settings["words"]["all"]
-                houseTemplate["tags"]  = tags
-                fields = {}
-                fields["avgPrice"] = onecity["avgPrice"]
-                fields["sailCount"] = onecity["sailCount"]
-                fields["in90"] = onecity["in90"]
-                fields["viewCount"] = onecity["viewCount"]
-                houseTemplate["time"] = str(onecity["time"])
-                houseTemplate["fields"]  = fields
-                client.write_points([houseTemplate])'''
     pass
