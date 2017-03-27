@@ -148,7 +148,7 @@ def getHouses(cursor):
     query = ("SELECT code,saled_date FROM house")
     cursor.execute(query)
     for (code,saled_date) in cursor:
-        houses[code] = saled_date is None
+        houses[code] = not saled_date is None
     return houses     
 
 def insertHouse(conn, cursor):
@@ -184,6 +184,7 @@ def insertHouse(conn, cursor):
             elif houseCodes[code]:
                 del houseCodes[code]
         conn.commit()
+    print houseCodes.k
     for code in houseCodes:
         update_house_data = {
             'code': code,
