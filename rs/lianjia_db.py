@@ -184,7 +184,6 @@ def insertHouse(conn, cursor):
             elif houseCodes[code]:
                 del houseCodes[code]
         conn.commit()
-    print houseCodes.k
     for code in houseCodes:
         update_house_data = {
             'code': code,
