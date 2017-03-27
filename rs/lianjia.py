@@ -40,6 +40,9 @@ def parsePage(client, url, cityName, distinct = "all", area = "all", village = "
         sailCount = spans[1].find("strong").text
         in90 = spans[2].find("strong").text
         viewCount = spans[3].find("strong").text
+    #if url == "http://sh.lianjia.com/ershoufang/meilong":
+    #    sailCount = "525"
+    #print url
     houseTemplate={}
     houseTemplate["measurement"]="HouseSales"
     tags={}

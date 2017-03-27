@@ -181,10 +181,12 @@ def insertHouse(conn, cursor):
             }
             if not code in houseCodes:
                 cursor.execute(add_house, data_house)
-            elif houseCodes[code]:
+            else:
                 del houseCodes[code]
         conn.commit()
-    for code in houseCodes:
+    for (code,isSaled) in houseCodes.items():
+        if isSaled:
+            continue
         update_house_data = {
             'code': code,
             'saled_date': now.strftime('%Y-%m-%d %H:%M:%S')
