@@ -29,7 +29,11 @@ def parsePage(client, url, cityName, distinct = "all", area = "all", village = "
    
     if len(spans) != 4:
         pass
-    findAvg = spans[0].find("strong")
+    try:
+        findAvg = spans[0].find("strong")
+    except:
+        print url
+        return soup
     if findAvg == None:
         avgPrice = "0"
         sailCount = "0"
@@ -40,9 +44,6 @@ def parsePage(client, url, cityName, distinct = "all", area = "all", village = "
         sailCount = spans[1].find("strong").text
         in90 = spans[2].find("strong").text
         viewCount = spans[3].find("strong").text
-    #if url == "http://sh.lianjia.com/ershoufang/meilong":
-    #    sailCount = "525"
-    #print url
     houseTemplate={}
     houseTemplate["measurement"]="HouseSales"
     tags={}
@@ -62,6 +63,7 @@ def parsePage(client, url, cityName, distinct = "all", area = "all", village = "
         tags["village"] = village          
     houseTemplate["tags"]  = tags
     fields = {}
+    
     fields["avgPrice"] = int(avgPrice)
     fields["sailCount"] = int(sailCount)
     fields["in90"] = int(in90)

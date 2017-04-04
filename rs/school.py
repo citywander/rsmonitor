@@ -90,6 +90,7 @@ def updateDistinct(cursor,level):
         for address in addresses.split(","):
             for oi in sh:
                 if address in oi.address:
+                    print address
                     if level == 1:
                         data_school = {
                             'id': id,
