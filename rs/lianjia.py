@@ -10,6 +10,7 @@ import urllib2
 import yaml
 import socket
 import json
+import ljutils
 
 access_token="7poanTTBCymmgE0FOn1oKp"
 
@@ -22,28 +23,9 @@ def load():
 settings= load()
 
 def parsePage(client, url, cityName, distinct = "all", area = "all", village = "all"):
-    page = urllib2.urlopen(url)
-    html_doc = page.read()
-    soup = BeautifulSoup(html_doc.decode('utf-8','ignore'), "html.parser")
-    spans = soup.find_all('span', attrs={'class':'botline'})
-   
-    if len(spans) != 4:
-        pass
-    try:
-        findAvg = spans[0].find("strong")
-    except:
-        print url
+    (soup, avgPrice, sailCount, in90, viewCount)=ljutils.parsePage(url)
+    if avgPrice is None:
         return soup
-    if findAvg == None:
-        avgPrice = "0"
-        sailCount = "0"
-        in90 = "0"
-        viewCount = "0"
-    else:    
-        avgPrice = findAvg.text
-        sailCount = spans[1].find("strong").text
-        in90 = spans[2].find("strong").text
-        viewCount = spans[3].find("strong").text
     houseTemplate={}
     houseTemplate["measurement"]="HouseSales"
     tags={}

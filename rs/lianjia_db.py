@@ -89,16 +89,23 @@ def insertArea(districts_dict):
             cursor.execute(add_area, data_area)
     pass
 
-def insertVillage(areas_dict):
+def insertVillage():
+    areas_dict=getAreas(cursor)
+    villages = getVillages(cursor, False)
     for (k,v) in areas_dict.items():
         areas = parseMap("sh", k, "quyu", "village")
         for area in areas:
+            code = area["dataId"]
+            if code in villages.keys():
+                continue
             data_village = {
               'area_id': v,
               'code': area["dataId"],
               'name': area["showName"]
             }
             cursor.execute(add_village, data_village)
+    conn.commit()
+    updateDetailVillage()
     pass
 
 def getVillages(cursor, isnull=True):
@@ -112,14 +119,13 @@ def getVillages(cursor, isnull=True):
         villages[code]=id
     return villages 
 
-def updateDetailVillage(conn, cursor):
+def updateDetailVillage():
     villages=getVillages(cursor)
     for (k,v) in villages.items():
         url="http://soa.dooioo.com/api/v4/online/house/ershoufang/search?access_token=%s&cityCode=sh&community_id=%s&limit_offset=1&limit_count=500"
         url = url % (access_token, k)
         page = urllib2.urlopen(url)
-        prop = json.load(page)["data"]["prop"]
-        print prop["propertyAddress"]
+        prop = json.load(page)["data"]["property"]
         if not "devCompany" in prop:
             prop["devCompany"] = ""
         if not "mgtCompany" in prop:
