@@ -126,7 +126,7 @@ def parseHousePage(url,code, cursor):
 
 if __name__ == '__main__':
     client = InfluxDBClient('10.58.80.214', 8086)
-    result = client.query("SELECT * FROM \"HouseSales\" where time>'2017-03-23 00:00:00' and  time<'2017-03-23 23:59:59'", database="RealEstate")
+    result = client.query("SELECT * FROM \"HouseSales\" where time>'2017-03-24 00:00:00' and  time<'2017-03-24 23:59:59'", database="RealEstate")
     hostname = socket.gethostname()
     if hostname == "WAGAN":
         conn = mysql.connector.connect(host='192.168.1.50', port = 13306,user='root',passwd='Initial0',db='realestate')
@@ -137,17 +137,16 @@ if __name__ == '__main__':
     for (rec,cs) in result.items():
         for c in cs:
             if c[u'village'].encode("utf-8") in villages.keys():
-                print villages[c[u'village'].encode("utf-8")]
                 data_daily = {
-                    "avgPrice": avgPrice,
-                    "in90": in90,
-                    "sailCount": sailCount,
-                    "viewCount": viewCount,
-                    "village_id": villageId,
-                    "daily_id": daily_id
+                    "avgPrice": int(c['avgPrice']),
+                    "in90": int(c['in90']),
+                    "sailCount": int(c['sailCount']),
+                    "viewCount": int(c['viewCount']),
+                    "village_id": villages[c[u'village'].encode("utf-8")],
+                    "daily_id": 2
                 } 
                 cursor.execute(add_village_daily, data_daily)
-                conn.commit()   
+                conn.commit()
     
     #dailyId = getRecordDate(cursor)    
     #recordDaily(cursor, dailyId)
