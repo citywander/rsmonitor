@@ -100,14 +100,15 @@ def insertVillage():
             code = area["dataId"]
             if code in villages.keys():
                 continue
-            if code=="5011000018511":
-                print code
+
             data_village = {
               'area_id': v,
               'code': code,
               'name': area["showName"]
             }
             cursor.execute(add_village, data_village)
+    conn.commit()
+    updateDetailVillage()
     pass
 
 def getVillages(cursor, isnull=True):

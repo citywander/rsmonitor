@@ -13,6 +13,7 @@ import datetime
 from bs4 import BeautifulSoup
 from threading import Thread, Lock
 import queue
+import ljutils
 
 add_daily = ("INSERT INTO daily "
               "(rec_date)"
@@ -105,12 +106,22 @@ def recordDaily(cursor, dailyId):
         if villageId in villageIds:
             continue
         baseUrl = "http://sh.lianjia.com/ershoufang/q" + code
-        parsePage(baseUrl, villageId, code, cursor, dailyId)
+        (_, avgPrice, in90, sailCount, viewCount)=ljutils.parsePage(baseUrl)
+        data_daily = {
+            "avgPrice": avgPrice,
+            "in90": in90,
+            "sailCount": sailCount,
+            "viewCount": viewCount,
+            "village_id": villageId,
+            "daily_id": dailyId
+        } 
+        cursor.execute(add_village_daily, data_daily)
+        conn.commit()        
     pass
 
 def getHouses(cursor):
     houses={}
-    query = ("SELECT id, code FROM house where saled_date is not null")
+    query = ("SELECT id, code FROM house where is_checked=0 and saled_date is null")
     cursor.execute(query)
     for (id, code) in cursor:
         houses[code]=id
@@ -122,11 +133,19 @@ def parseHousePage(url,code, cursor):
     soup = BeautifulSoup(html_doc.decode('utf-8','ignore'), "html.parser")
     xiajia = soup.find_all('div', attrs={'class':'tag tag_yixiajia'})
     yishixiao = soup.find_all('div', attrs={'class':'tag tag_yishixiao'})
+    now = datetime.datetime.now()
+    data_date = {
+      'saled_date': now.strftime('%Y-%m-%d %H:%M:%S')
+    }    
     if len(xiajia) > 0 or len(yishixiao)>0:
-        return
-    #updateSql="update realestate.house set saled_date=null where code='" + code + "'" 
-    #cursor.execute(updateSql)
-    #conn.commit()    
+        updateSql=("update realestate.house set saled_date=%(saled_date)s,is_checked=1 where code='" + code + "'")
+        cursor.execute(updateSql, data_date)        
+    else:
+        #updateSql="update realestate.house set saled_date=null,is_checked=1 where code='" + code + "'"
+        #print code
+        pass
+    
+    conn.commit()    
 
 if __name__ == '__main__':
     hostname = socket.gethostname()
@@ -134,7 +153,7 @@ if __name__ == '__main__':
         conn = mysql.connector.connect(host='192.168.1.50', port = 13306,user='root',passwd='Initial0',db='realestate')
     else:
         conn = mysql.connector.connect(host='10.58.80.214', port = 3306,user='root',passwd='Initial0',db='realestate')
-    #cursor = conn.cursor()
+    cursor = conn.cursor()
     #dailyId = getRecordDate(cursor)    
     #recordDaily(cursor, dailyId)
     #houses = getHouses(cursor)
@@ -143,4 +162,5 @@ if __name__ == '__main__':
     #    parseHousePage(url, code, cursor)
     #cursor.close()
     #conn.close()
+
     pass
