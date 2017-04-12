@@ -46,7 +46,7 @@ def load():
 settings= load()
 
 def parseMap(city, dateId, siteType, type):    
-    url="http://soa.dooioo.com/api/v4/online/house/ershoufang/listMapResult?access_token=%s&cityCode=%s&siteType=%s&type=%s&dataId=%s"
+    url="http://soa.dooioo.com/api/v4/online/house/ershoufang/listMapResult?access_token=%s&client=pc&cityCode=%s&siteType=%s&type=%s&dataId=%s&limit_count=10000"
     url = url % (access_token, city, siteType, type, dateId)
     page = urllib2.urlopen(url)
     return json.load(page)["dataList"]
@@ -89,13 +89,22 @@ def insertArea(districts_dict):
             cursor.execute(add_area, data_area)
     pass
 
-def insertVillage(areas_dict):
+def insertVillage():
+    areas_dict=getAreas(cursor)
+    villages = getVillages(cursor, False)
     for (k,v) in areas_dict.items():
         areas = parseMap("sh", k, "quyu", "village")
+        if k=="beicai":
+            print areas
         for area in areas:
+            code = area["dataId"]
+            if code in villages.keys():
+                continue
+            if code=="5011000018511":
+                print code
             data_village = {
               'area_id': v,
-              'code': area["dataId"],
+              'code': code,
               'name': area["showName"]
             }
             cursor.execute(add_village, data_village)
@@ -112,14 +121,13 @@ def getVillages(cursor, isnull=True):
         villages[code]=id
     return villages 
 
-def updateDetailVillage(conn, cursor):
+def updateDetailVillage():
     villages=getVillages(cursor)
     for (k,v) in villages.items():
-        url="http://soa.dooioo.com/api/v4/online/house/ershoufang/search?access_token=%s&cityCode=sh&community_id=%s&limit_offset=1&limit_count=500"
+        url="http://soa.dooioo.com/api/v4/online/house/ershoufang/search?access_token=%s&cityCode=sh&community_id=%s&limit_offset=1&limit_count=1500"
         url = url % (access_token, k)
         page = urllib2.urlopen(url)
-        prop = json.load(page)["data"]["prop"]
-        print prop["propertyAddress"]
+        prop = json.load(page)["data"]["property"]
         if not "devCompany" in prop:
             prop["devCompany"] = ""
         if not "mgtCompany" in prop:
@@ -151,12 +159,12 @@ def getHouses(cursor):
         houses[code] = not saled_date is None
     return houses     
 
-def insertHouse(conn, cursor):
+def insertHouse():
     villages=getVillages(cursor, False)
     houseCodes = getHouses(cursor)
     now = datetime.datetime.now()
     for (k,v) in villages.items():
-        url="http://soa.dooioo.com/api/v4/online/house/ershoufang/search?access_token=%s&cityCode=sh&community_id=%s&limit_offset=1&limit_count=1000"
+        url="http://soa.dooioo.com/api/v4/online/house/ershoufang/search?access_token=%s&client=pc&cityCode=sh&community_id=%s&limit_offset=1&limit_count=1000"
         url = url % (access_token, k)
         page = urllib2.urlopen(url)
         properties = json.load(page)["data"]["list"]
@@ -201,9 +209,9 @@ if __name__ == '__main__':
     if hostname == "WAGAN":
         conn = mysql.connector.connect(host='192.168.1.50', port = 13306,user='root',passwd='Initial0',db='realestate')
     else:
-        conn = mysql.connector.connect(host='10.58.81.211', port = 3306,user='root',passwd='Initial0',db='realestate')
+        conn = mysql.connector.connect(host='10.58.80.214', port = 3306,user='root',passwd='Initial0',db='realestate')
     cursor = conn.cursor()
-    insertHouse(conn, cursor)
+    insertHouse()
     conn.commit()
     cursor.close()
     conn.close()

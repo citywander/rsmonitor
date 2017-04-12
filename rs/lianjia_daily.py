@@ -11,6 +11,8 @@ import json
 import mysql.connector
 import datetime
 from bs4 import BeautifulSoup
+from threading import Thread, Lock
+import queue
 
 add_daily = ("INSERT INTO daily "
               "(rec_date)"
@@ -19,6 +21,10 @@ add_daily = ("INSERT INTO daily "
 add_village_daily = ("INSERT INTO village_daily "
               "(avgPrice, in90, sailCount, viewCount, village_id, daily_id)"
               "VALUES (%(avgPrice)s, %(in90)s, %(sailCount)s,%(viewCount)s,%(village_id)s, %(daily_id)s)")
+
+q=queue.Queue(2) 
+
+maxProducer=2
 
 def getVillages(cursor):
     villages={}
@@ -79,11 +85,12 @@ def parsePage(url, villageId, code, cursor, daily_id):
         "village_id": villageId,
         "daily_id": daily_id
     } 
-    cursor.execute(add_village_daily, data_daily)
-    conn.commit()   
-    return soup
+    print url
+    #cursor.execute(add_village_daily, data_daily)
+    #conn.commit()   
+    #return soup
 
-def getVillageDaily(cursor, dailyid):
+def getVillageDaily(cursor, dailyId):
     villageIds=set()
     query = ("SELECT village_id FROM village_daily where daily_id=" + str(dailyId))
     cursor.execute(query)
@@ -126,14 +133,14 @@ if __name__ == '__main__':
     if hostname == "WAGAN":
         conn = mysql.connector.connect(host='192.168.1.50', port = 13306,user='root',passwd='Initial0',db='realestate')
     else:
-        conn = mysql.connector.connect(host='10.58.81.211', port = 3306,user='root',passwd='Initial0',db='realestate')
-    cursor = conn.cursor()
-    dailyId = getRecordDate(cursor)    
-    recordDaily(cursor, dailyId)
+        conn = mysql.connector.connect(host='10.58.80.214', port = 3306,user='root',passwd='Initial0',db='realestate')
+    #cursor = conn.cursor()
+    #dailyId = getRecordDate(cursor)    
+    #recordDaily(cursor, dailyId)
     #houses = getHouses(cursor)
     #for (code, id) in houses.items():
     #    url = "http://sh.lianjia.com/ershoufang/sh" + code +".html"
     #    parseHousePage(url, code, cursor)
-    cursor.close()
-    conn.close()
+    #cursor.close()
+    #conn.close()
     pass

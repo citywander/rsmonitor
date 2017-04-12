@@ -19,9 +19,16 @@ add_daily = ("INSERT INTO daily "
               "(rec_date)"
               "VALUES (%(rec_date)s)")
 
-add_village_daily = ("INSERT INTO village_daily "
-              "(avgPrice, in90, sailCount, viewCount, village_id, daily_id)"
-              "VALUES (%(avgPrice)s, %(in90)s, %(sailCount)s,%(viewCount)s,%(village_id)s, %(daily_id)s)")
+add_village_daily = ("INSERT INTO village_inf "
+              "(avgPrice, in90, sailCount, viewCount, city,area,district,village,rec_time)"
+              "VALUES (%(avgPrice)s, %(in90)s, %(sailCount)s,%(viewCount)s,%(city)s, %(area)s, %(district)s, %(village)s,%(rec_time)s)")
+
+def load():
+    f = open('cities.yml')
+    x = yaml.load(f)
+    return x  
+
+settings= load()
 
 def getVillages(cursor):
     villages={}
@@ -30,6 +37,22 @@ def getVillages(cursor):
     for (id, name) in cursor:
         villages[name.encode("utf-8")]=id
     return villages
+
+def getAreas(cursor):
+    areas={}
+    query = ("SELECT id, name FROM area")
+    cursor.execute(query)
+    for (id, name) in cursor:
+        areas[name.encode("utf-8")]=id
+    return areas
+
+def getDistricts(cursor):
+    districts={}
+    query = ("SELECT id, name from district")
+    cursor.execute(query)
+    for (id, name) in cursor:
+        districts[name.encode("utf-8")]=id
+    return districts
 
 def getRecordDate(cursor):
     id = getLatestRecordDate(cursor)
@@ -126,7 +149,9 @@ def parseHousePage(url,code, cursor):
 
 if __name__ == '__main__':
     client = InfluxDBClient('10.58.80.214', 8086)
-    result = client.query("SELECT * FROM \"HouseSales\" where time>'2017-03-24 00:00:00' and  time<'2017-03-24 23:59:59'", database="RealEstate")
+    influxSql="SELECT * FROM HouseSales where area='%s' or \"distinct\"='%s' or village='%s'"
+    allCn=settings["words"]["all"].encode("utf-8")
+    result = client.query(influxSql%(allCn,allCn,allCn), database="RealEstate")
     hostname = socket.gethostname()
     if hostname == "WAGAN":
         conn = mysql.connector.connect(host='192.168.1.50', port = 13306,user='root',passwd='Initial0',db='realestate')
@@ -134,19 +159,35 @@ if __name__ == '__main__':
         conn = mysql.connector.connect(host='10.58.80.214', port = 3306,user='root',passwd='Initial0',db='realestate')
     cursor = conn.cursor()
     villages = getVillages(cursor)
+    areas=getAreas(cursor)
+    districts=getDistricts(cursor)
     for (rec,cs) in result.items():
         for c in cs:
-            if c[u'village'].encode("utf-8") in villages.keys():
-                data_daily = {
+            areaName=c[u'area'].encode("utf-8")
+            districtName=c[u'distinct'].encode("utf-8")
+            villageName=c[u'village'].encode("utf-8")
+            area=0
+            district=0
+            village=0
+            if villageName in villages.keys():
+                village=int(villages[villageName])
+            if areaName in areas.keys():
+                area=int(areas[areaName])
+            if districtName in districts.keys():
+                district=int(districts[districtName])
+            data_daily = {
                     "avgPrice": int(c['avgPrice']),
                     "in90": int(c['in90']),
                     "sailCount": int(c['sailCount']),
                     "viewCount": int(c['viewCount']),
-                    "village_id": villages[c[u'village'].encode("utf-8")],
-                    "daily_id": 2
-                } 
-                cursor.execute(add_village_daily, data_daily)
-                conn.commit()
+                    "city": 1,
+                    "village": village,
+                    "area": area,
+                    "district": district,
+                    "rec_time": c[u'time'].encode("utf-8")
+            }
+            cursor.execute(add_village_daily, data_daily)
+            conn.commit()
     
     #dailyId = getRecordDate(cursor)    
     #recordDaily(cursor, dailyId)
