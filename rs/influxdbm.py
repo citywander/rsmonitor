@@ -146,53 +146,9 @@ def parseHousePage(url,code, cursor):
     #cursor.execute(updateSql)
     #conn.commit()    
 
-def parsePage():
-    query = ("SELECT avgPrice,in90,sailCount,viewCount,agent,city,area,district,village,rec_time FROM village_inf")
-    cursor.execute(query)
-    
-    houseTemplates=[]
-    for (avgPrice,in90,sailCount,viewCount,agent,area,district,village,rec_time) in cursor:    
-        houseTemplate={}
-        houseTemplate["measurement"]="HouseSales"
-        tags={}
-        houseTemplate["tags"]  = tags
-        fields = {}
-    
-        fields["agent"] = agent
-        fields["city"] = 1
-        fields["district"] = district
-        fields["area"] = area
-        fields["village"] = village       
-        fields["avgPrice"] = avgPrice
-        fields["sailCount"] = sailCount
-        fields["in90"] = in90
-        fields["viewCount"] = viewCount
-        fields["time"] = rec_time.strftime('%Y-%m-%d %H:%M:%S')
-        houseTemplate["fields"]  = fields
-        
-        houseTemplates.append(houseTemplate)
-        if len(houseTemplates) == 10:
-            client.write_points(houseTemplates)
-            houseTemplates=[]
-    if len(houseTemplates) > 0:
-        client.write_points(houseTemplates)
-    pass
-    
-    
-if __name__ == '__main__':
-    hostname = socket.gethostname()    
-    if hostname == "WAGAN":
-        client = InfluxDBClient('127.0.0.1', 8086, '', '', 'RealEstate')
-    else:
-        client = InfluxDBClient('10.58.80.214', 8086, '', '', 'RealEstate')    
+def influxToDB():
     influxSql="SELECT * FROM HouseSales"
-    allCn=settings["words"]["all"].encode("utf-8")
-    result = client.query(influxSql, database="RealEstate")    
-    if hostname == "WAGAN":
-        conn = mysql.connector.connect(host='192.168.1.50', port = 13306,user='root',passwd='Initial0',db='realestate')
-    else:
-        conn = mysql.connector.connect(host='10.58.80.214', port = 3306,user='root',passwd='Initial0',db='realestate')
-    cursor = conn.cursor()
+    result = client.query(influxSql, database="RealEstate")        
     villages = getVillages(cursor)
     areas=getAreas(cursor)
     districts=getDistricts(cursor)
@@ -223,7 +179,59 @@ if __name__ == '__main__':
                     "rec_time": c[u'time'].encode("utf-8").replace("T", " ")[0:19]
             }
             cursor.execute(add_village_daily, data_daily)
-            conn.commit()
+            conn.commit()    
+
+def dbToInflux():
+    query = ("SELECT id, avgPrice,in90,sailCount,viewCount,agent,city,area,district,village,rec_time FROM village_inf")
+    cursor.execute(query)
+    
+    houseTemplates=[]
+    records=[]
+    for (infid, avgPrice,in90,sailCount,viewCount,agent,city,area,district,village,rec_time) in cursor:
+        records.append((infid, avgPrice,in90,sailCount,viewCount,agent,city,area,district,village,rec_time))
+
+    for (infid, avgPrice,in90,sailCount,viewCount,agent,city,area,district,village,rec_time) in records:
+        houseTemplate={}
+        houseTemplate["measurement"]="HouseSales"
+        tags={}
+        houseTemplate["tags"]  = tags
+        fields = {}
+    
+        fields["agent"] = agent
+        fields["city"] = 1
+        fields["district"] = district
+        fields["area"] = area
+        fields["village"] = village       
+        fields["avgPrice"] = avgPrice
+        fields["sailCount"] = sailCount
+        fields["in90"] = in90
+        fields["viewCount"] = viewCount
+        houseTemplate["time"] = (rec_time + datetime.timedelta(milliseconds=infid)).strftime('%Y-%m-%d %H:%M:%S.%f')
+        houseTemplate["fields"]  = fields
+        houseTemplates.append(houseTemplate)
+        if len(houseTemplates) == 10:
+            client.write_points(houseTemplates)
+            houseTemplates=[]
+
+    if len(houseTemplates) > 0:
+        client.write_points(houseTemplates)
+        pass
+    pass
+    
+    
+if __name__ == '__main__':
+    hostname = socket.gethostname()    
+    if hostname == "WAGAN":
+        client = InfluxDBClient('127.0.0.1', 8086, '', '', 'RealEstate')
+    else:
+        client = InfluxDBClient('10.58.80.214', 8086, '', '', 'RealEstate')    
+    if hostname == "WAGAN":
+        conn = mysql.connector.connect(host='192.168.1.50', port = 13306,user='root',passwd='Initial0',db='realestate')
+    else:
+        conn = mysql.connector.connect(host='10.58.80.214', port = 3306,user='root',passwd='Initial0',db='realestate')
+    cursor = conn.cursor()
+    
+    dbToInflux()
     
     #dailyId = getRecordDate(cursor)    
     #recordDaily(cursor, dailyId)

@@ -27,7 +27,7 @@ def parsePage(client, url, cityName, distinct = "all", area = "all", village = "
     if avgPrice is None:
         return soup
     houseTemplate={}
-    houseTemplate["measurement"]="HouseSales"
+    houseTemplate["measurement"]="PropertySales"
     tags={}
     tags["agent"] = settings["agents"]["lj"]
     tags["city"] = cityName
