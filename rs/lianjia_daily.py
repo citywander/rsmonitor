@@ -12,7 +12,7 @@ import mysql.connector
 import datetime
 from bs4 import BeautifulSoup
 from threading import Thread, Lock
-import queue
+import Queue
 import ljutils
 
 add_daily = ("INSERT INTO daily "
@@ -23,7 +23,7 @@ add_village_daily = ("INSERT INTO village_daily "
               "(avgPrice, in90, sailCount, viewCount, village_id, daily_id)"
               "VALUES (%(avgPrice)s, %(in90)s, %(sailCount)s,%(viewCount)s,%(village_id)s, %(daily_id)s)")
 
-q=queue.Queue(2) 
+q=Queue.Queue(2) 
 
 maxProducer=2
 
@@ -154,13 +154,13 @@ if __name__ == '__main__':
     else:
         conn = mysql.connector.connect(host='10.58.80.214', port = 3306,user='root',passwd='Initial0',db='realestate')
     cursor = conn.cursor()
-    #dailyId = getRecordDate(cursor)    
-    #recordDaily(cursor, dailyId)
+    dailyId = getRecordDate(cursor)    
+    recordDaily(cursor, dailyId)
     #houses = getHouses(cursor)
     #for (code, id) in houses.items():
     #    url = "http://sh.lianjia.com/ershoufang/sh" + code +".html"
     #    parseHousePage(url, code, cursor)
-    #cursor.close()
-    #conn.close()
+    cursor.close()
+    conn.close()
 
     pass

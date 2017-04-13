@@ -55,7 +55,7 @@ def parsePage(client, url, cityName, distinct = "all", area = "all", village = "
     return soup
     
 def parseDistinct(soup, client, city):
-    divs = soup.find_all('div', attrs={'class':'gio_district'})
+    divs = soup.find_all('div', attrs={'class':'level1'})
     if len(divs) == 0:
         return
     for a in divs[0].find_all('a', attrs={'class':''}):
@@ -82,7 +82,7 @@ def parseCity(client, city):
     pass
 
 def parseMap(city, distinct):    
-    url="http://soa.dooioo.com/api/v4/online/house/ershoufang/listMapResult?access_token=%s&cityCode=%s&type=village&dataId=%s"
+    url="http://soa.dooioo.com/api/v4/online/house/ershoufang/listMapResult?access_token=%s&client=pc&cityCode=%s&type=village&dataId=%s&limit_count=10000"
     url = url % (access_token, city, distinct)
     page = urllib2.urlopen(url)
     return json.load(page)["dataList"]

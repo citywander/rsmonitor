@@ -16,23 +16,24 @@ def parsePage(url):
     page = urllib2.urlopen(url)
     html_doc = page.read()
     soup = BeautifulSoup(html_doc.decode('utf-8','ignore'), "html.parser")
-    spans = soup.find_all('span', attrs={'class':'botline'})
+    spans = soup.find_all('span', {'class':'num'})
     
-    if len(spans) != 4:
-        pass
     try:
         print url
-        findAvg = spans[0].find("strong")
+        if len(spans) == 3:
+            findAvg=None
+        else:
+            findAvg = spans[0].get_text()
     except:
         return (soup, None, None, None, None)
     if findAvg == None:
         avgPrice = "0"
-        sailCount = "0"
-        in90 = "0"
-        viewCount = "0"
+        sailCount = spans[0].get_text()
+        in90 = spans[1].get_text()
+        viewCount = spans[2].get_text()
     else:    
-        avgPrice = findAvg.text
-        sailCount = spans[1].find("strong").text
-        in90 = spans[2].find("strong").text
-        viewCount = spans[3].find("strong").text
+        avgPrice = findAvg
+        sailCount = spans[1].get_text()
+        in90 = spans[2].get_text()
+        viewCount = spans[3].get_text()
     return (soup, avgPrice, sailCount, in90, viewCount)

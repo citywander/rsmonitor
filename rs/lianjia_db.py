@@ -165,7 +165,7 @@ def insertHouse():
     houseCodes = getHouses(cursor)
     now = datetime.datetime.now()
     for (k,v) in villages.items():
-        url="http://soa.dooioo.com/api/v4/online/house/ershoufang/search?access_token=%s&client=pc&cityCode=sh&community_id=%s&limit_offset=1&limit_count=1000"
+        url="http://soa.dooioo.com/api/v4/online/house/ershoufang/search?access_token=%s&client=pc&cityCode=sh&community_id=%s&limit_offset=1&limit_count=10000"
         url = url % (access_token, k)
         page = urllib2.urlopen(url)
         properties = json.load(page)["data"]["list"]
