@@ -146,7 +146,41 @@ def parseHousePage(url,code, cursor):
     #cursor.execute(updateSql)
     #conn.commit()    
 
-def parsePage():
+def influxToDb():
+    influxSql="SELECT * FROM HouseSales"
+    result = client.query(influxSql, database="RealEstate")           
+    villages = getVillages(cursor)
+    areas=getAreas(cursor)
+    districts=getDistricts(cursor)
+    for (rec,cs) in result.items():
+        for c in cs:
+            areaName=c[u'area'].encode("utf-8")
+            districtName=c[u'distinct'].encode("utf-8")
+            villageName=c[u'village'].encode("utf-8")
+            area=0
+            district=0
+            village=0
+            if villageName in villages.keys():
+                village=int(villages[villageName])
+            if areaName in areas.keys():
+                area=int(areas[areaName])
+            if districtName in districts.keys():
+                district=int(districts[districtName])
+            data_daily = {
+                    "avgPrice": int(c['avgPrice']),
+                    "in90": int(c['in90']),
+                    "sailCount": int(c['sailCount']),
+                    "viewCount": int(c['viewCount']),
+                    "city": 1,
+                    "village": village,
+                    "area": area,
+                    "district": district,
+                    "rec_time": c[u'time'].encode("utf-8").replace("T", " ")[0:19]
+            }
+            cursor.execute(add_village_daily, data_daily)
+            conn.commit()    
+    
+def dbToInflux():
     query = ("SELECT avgPrice,in90,sailCount,viewCount,agent,city,area,district,village,rec_time FROM village_inf")
     cursor.execute(query)
     
@@ -177,53 +211,115 @@ def parsePage():
     if len(houseTemplates) > 0:
         client.write_points(houseTemplates)
     pass
+
+def cityToInflux():
+    query = ("SELECT id,name from city")
+    cursor.execute(query)
     
+    houseTemplates=[]
+    for (cityid, name) in cursor:    
+        houseTemplate={}
+        houseTemplate["measurement"]="Cities"
+        tags={}
+        tags["sid"] = str(cityid) 
+        tags["name"] = name        
+        houseTemplate["tags"]  = tags
+        fields = {}
+        fields["id"] = str(cityid)
+        houseTemplate["fields"]  = fields
+        houseTemplates.append(houseTemplate)
+        if len(houseTemplates) == 10:
+            client.write_points(houseTemplates)
+            houseTemplates=[]
+    if len(houseTemplates) > 0:
+        client.write_points(houseTemplates)
+    pass
+
+def districtToInflux():
+    query = ("SELECT id,name,city_id from district")
+    cursor.execute(query)
     
+    houseTemplates=[]
+    for (districtid, name,city_id) in cursor:    
+        houseTemplate={}
+        houseTemplate["measurement"]="Districts"
+        tags={}
+        tags["sid"] = str(districtid)
+        tags["city_id"] = str(city_id)
+        tags["name"] = name        
+        houseTemplate["tags"]  = tags
+        fields = {}
+        fields["id"] = str(districtid)
+        houseTemplate["fields"]  = fields
+        houseTemplates.append(houseTemplate)
+        if len(houseTemplates) == 10:
+            client.write_points(houseTemplates)
+            houseTemplates=[]
+    if len(houseTemplates) > 0:
+        client.write_points(houseTemplates)
+    pass
+
+def areaToInflux():
+    query = ("SELECT id,name,district_id from area")
+    cursor.execute(query)
+    
+    houseTemplates=[]
+    for (areaid, name,district_id) in cursor:    
+        houseTemplate={}
+        houseTemplate["measurement"]="Areas"
+        tags={}
+        tags["sid"] = str(areaid)    
+        tags["district_id"] = str(district_id)           
+        tags["name"] = name        
+        houseTemplate["tags"]  = tags
+        fields = {}
+        fields["id"] = str(areaid)    
+        houseTemplate["fields"]  = fields
+        houseTemplates.append(houseTemplate)
+        if len(houseTemplates) == 10:
+            client.write_points(houseTemplates)
+            houseTemplates=[]
+    if len(houseTemplates) > 0:
+        client.write_points(houseTemplates)
+    pass
+
+
+def villageToInflux():
+    query = ("SELECT id,name,area_id from village")
+    cursor.execute(query)
+    
+    houseTemplates=[]
+    for (villageId, name,area_id) in cursor:    
+        houseTemplate={}
+        houseTemplate["measurement"]="Villages"
+        tags={}
+        tags["name"] = name
+        tags["sid"] = str(villageId)
+        tags["area_id"] = str(area_id)        
+        houseTemplate["tags"]  = tags
+        fields = {}
+        fields["id"] = str(villageId)
+        houseTemplate["fields"]  = fields
+        houseTemplates.append(houseTemplate)
+        if len(houseTemplates) == 10:
+            client.write_points(houseTemplates)
+            houseTemplates=[]
+    if len(houseTemplates) > 0:
+        client.write_points(houseTemplates)
+    pass
+
 if __name__ == '__main__':
     hostname = socket.gethostname()    
     if hostname == "WAGAN":
         client = InfluxDBClient('127.0.0.1', 8086, '', '', 'RealEstate')
     else:
-        client = InfluxDBClient('10.58.80.214', 8086, '', '', 'RealEstate')    
-    influxSql="SELECT * FROM HouseSales"
-    allCn=settings["words"]["all"].encode("utf-8")
-    result = client.query(influxSql, database="RealEstate")    
+        client = InfluxDBClient('10.58.80.137', 8086, '', '', 'RealEstate')    
     if hostname == "WAGAN":
         conn = mysql.connector.connect(host='192.168.1.50', port = 13306,user='root',passwd='Initial0',db='realestate')
     else:
-        conn = mysql.connector.connect(host='10.58.80.214', port = 3306,user='root',passwd='Initial0',db='realestate')
+        conn = mysql.connector.connect(host='10.58.80.137', port = 3306,user='root',passwd='Initial0',db='realestate')
     cursor = conn.cursor()
-    villages = getVillages(cursor)
-    areas=getAreas(cursor)
-    districts=getDistricts(cursor)
-    print "query finished"
-    for (rec,cs) in result.items():
-        for c in cs:
-            areaName=c[u'area'].encode("utf-8")
-            districtName=c[u'distinct'].encode("utf-8")
-            villageName=c[u'village'].encode("utf-8")
-            area=0
-            district=0
-            village=0
-            if villageName in villages.keys():
-                village=int(villages[villageName])
-            if areaName in areas.keys():
-                area=int(areas[areaName])
-            if districtName in districts.keys():
-                district=int(districts[districtName])
-            data_daily = {
-                    "avgPrice": int(c['avgPrice']),
-                    "in90": int(c['in90']),
-                    "sailCount": int(c['sailCount']),
-                    "viewCount": int(c['viewCount']),
-                    "city": 1,
-                    "village": village,
-                    "area": area,
-                    "district": district,
-                    "rec_time": c[u'time'].encode("utf-8").replace("T", " ")[0:19]
-            }
-            cursor.execute(add_village_daily, data_daily)
-            conn.commit()
+    villageToInflux()
     
     #dailyId = getRecordDate(cursor)    
     #recordDaily(cursor, dailyId)
