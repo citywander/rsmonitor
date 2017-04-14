@@ -22,6 +22,8 @@ def load():
 
 settings= load()
 
+houseTemplates=[]
+
 def parsePage(client, url, cityName, distinct = "all", area = "all", village = "all"):
     (soup, avgPrice, sailCount, in90, viewCount)=ljutils.parsePage(url)
     if avgPrice is None:
@@ -51,7 +53,10 @@ def parsePage(client, url, cityName, distinct = "all", area = "all", village = "
     fields["in90"] = int(in90)
     fields["viewCount"] = int(viewCount)
     houseTemplate["fields"]  = fields
-    client.write_points([houseTemplate])
+    houseTemplates.append(houseTemplate)
+    if len(houseTemplates) == 10:
+        client.write_points(houseTemplates)
+        houseTemplates=[]    
     return soup
     
 def parseDistinct(soup, client, city):
@@ -103,4 +108,6 @@ if __name__ == '__main__':
     for city in settings["cities"]:
         parseCity(client, city)
         pass
+    if len(houseTemplates) > 0:
+        client.write_points(houseTemplates)    
     pass
