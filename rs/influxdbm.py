@@ -144,43 +144,8 @@ def parseHousePage(url,code, cursor):
     #cursor.execute(updateSql)
     #conn.commit()    
 
-def influxToDB():
-    influxSql="SELECT * FROM HouseSales"
-    result = client.query(influxSql, database="RealEstate")        
-    villages = getVillages(cursor)
-    areas=getAreas(cursor)
-    districts=getDistricts(cursor)
-    print "query finished"
-    for (rec,cs) in result.items():
-        for c in cs:
-            areaName=c[u'area'].encode("utf-8")
-            districtName=c[u'distinct'].encode("utf-8")
-            villageName=c[u'village'].encode("utf-8")
-            area=0
-            district=0
-            village=0
-            if villageName in villages.keys():
-                village=int(villages[villageName])
-            if areaName in areas.keys():
-                area=int(areas[areaName])
-            if districtName in districts.keys():
-                district=int(districts[districtName])
-            data_daily = {
-                    "avgPrice": int(c['avgPrice']),
-                    "in90": int(c['in90']),
-                    "sailCount": int(c['sailCount']),
-                    "viewCount": int(c['viewCount']),
-                    "city": 1,
-                    "village": village,
-                    "area": area,
-                    "district": district,
-                    "rec_time": c[u'time'].encode("utf-8").replace("T", " ")[0:19]
-            }
-            cursor.execute(add_village_daily, data_daily)
-            conn.commit()    
-
 def influxToDb():
-    influxSql="SELECT * FROM HouseSales"
+    influxSql="SELECT * FROM PropertySales"
     result = client.query(influxSql, database="RealEstate")           
     villages = getVillages(cursor)
     areas=getAreas(cursor)
@@ -214,35 +179,40 @@ def influxToDb():
             conn.commit()    
     
 def dbToInflux():
-    query = ("SELECT avgPrice,in90,sailCount,viewCount,agent,city,area,district,village,rec_time FROM village_inf")
+    query = ("SELECT id, avgPrice,in90,sailCount,viewCount,agent,city,area,district,village,rec_time FROM village_inf")
     cursor.execute(query)
     
     houseTemplates=[]
-    for (avgPrice,in90,sailCount,viewCount,agent,area,district,village,rec_time) in cursor:    
+    records=[]
+    for (infid, avgPrice,in90,sailCount,viewCount,agent,city,area,district,village,rec_time) in cursor:
+        records.append((infid, avgPrice,in90,sailCount,viewCount,agent,city,area,district,village,rec_time))
+
+    for (infid, avgPrice,in90,sailCount,viewCount,agent,city,area,district,village,rec_time) in records:
         houseTemplate={}
         houseTemplate["measurement"]="HouseSales"
         tags={}
         houseTemplate["tags"]  = tags
         fields = {}
     
-        fields["agent"] = agent
-        fields["city"] = 1
-        fields["district"] = district
-        fields["area"] = area
-        fields["village"] = village       
+        fields["agent"] = str(agent)
+        fields["city"] = str(1)
+        fields["district"] = str(district)
+        fields["area"] = str(area)
+        fields["village"] = str(village)       
         fields["avgPrice"] = avgPrice
         fields["sailCount"] = sailCount
         fields["in90"] = in90
         fields["viewCount"] = viewCount
-        fields["time"] = rec_time.strftime('%Y-%m-%d %H:%M:%S')
+        houseTemplate["time"] = (rec_time + datetime.timedelta(milliseconds=infid)).strftime('%Y-%m-%d %H:%M:%S.%f')
         houseTemplate["fields"]  = fields
-        
         houseTemplates.append(houseTemplate)
         if len(houseTemplates) == 10:
             client.write_points(houseTemplates)
             houseTemplates=[]
+
     if len(houseTemplates) > 0:
         client.write_points(houseTemplates)
+        pass
     pass
 
 def cityToInflux():
@@ -352,7 +322,7 @@ if __name__ == '__main__':
     else:
         conn = mysql.connector.connect(host='10.58.80.137', port = 3306,user='root',passwd='Initial0',db='realestate')
     cursor = conn.cursor()
-    villageToInflux()
+    dbToInflux()
     
     #dailyId = getRecordDate(cursor)    
     #recordDaily(cursor, dailyId)
