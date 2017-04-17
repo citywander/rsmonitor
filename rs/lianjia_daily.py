@@ -5,13 +5,10 @@ Created on Mar 20, 2017
 
 '''
 import urllib2
-import yaml
 import socket
-import json
 import mysql.connector
 import datetime
 from bs4 import BeautifulSoup
-from threading import Thread, Lock
 import Queue
 import ljutils
 

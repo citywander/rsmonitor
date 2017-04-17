@@ -7,11 +7,9 @@ Created on Mar 20, 2017
 import urllib2
 import yaml
 import socket
-import json
 import mysql.connector
 import datetime
 from bs4 import BeautifulSoup
-from threading import Thread, Lock
 from influxdb import InfluxDBClient
 
 add_daily = ("INSERT INTO daily "
@@ -33,30 +31,30 @@ def getVillages(cursor):
     villages={}
     query = ("SELECT id, name FROM village")
     cursor.execute(query)
-    for (id, name) in cursor:
-        villages[name.encode("utf-8")]=id
+    for (vid, name) in cursor:
+        villages[name.encode("utf-8")]=vid
     return villages
 
 def getAreas(cursor):
     areas={}
     query = ("SELECT id, name FROM area")
     cursor.execute(query)
-    for (id, name) in cursor:
-        areas[name.encode("utf-8")]=id
+    for (areaid, name) in cursor:
+        areas[name.encode("utf-8")]=areaid
     return areas
 
 def getDistricts(cursor):
     districts={}
     query = ("SELECT id, name from district")
     cursor.execute(query)
-    for (id, name) in cursor:
-        districts[name.encode("utf-8")]=id
+    for (disId, name) in cursor:
+        districts[name.encode("utf-8")]=disId
     return districts
 
 def getRecordDate(cursor):
-    id = getLatestRecordDate(cursor)
-    if id != None:
-        return id
+    recId = getLatestRecordDate(cursor)
+    if recId != None:
+        return recId
     now = datetime.datetime.now()
     data_date = {
       'rec_date': now.strftime('%Y-%m-%d %H:%M:%S')
@@ -69,8 +67,8 @@ def getLatestRecordDate(cursor):
     now = datetime.datetime.now()
     query="SELECT id FROM realestate.daily where rec_date > '" + now.strftime('%Y-%m-%d') + " 00:00'"
     cursor.execute(query)
-    for (id,) in cursor:
-        return id
+    for (dailyId,) in cursor:
+        return dailyId
     return None
     
 def parsePage(url, villageId, code, cursor, daily_id):
@@ -130,8 +128,8 @@ def getHouses(cursor):
     houses={}
     query = ("SELECT id, code FROM house where saled_date is not null")
     cursor.execute(query)
-    for (id, code) in cursor:
-        houses[code]=id
+    for (sid, code) in cursor:
+        houses[code]=sid
     return houses
 
 def parseHousePage(url,code, cursor):
