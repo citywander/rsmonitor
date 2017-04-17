@@ -4,13 +4,14 @@ Created on Mar 20, 2017
 @author: I076054
 
 '''
-from bs4 import BeautifulSoup
+from concurrent import futures
 from influxdb import InfluxDBClient
 import urllib2
 import yaml
 import socket
 import json
 import ljutils
+from threading import Lock
 
 access_token="7poanTTBCymmgE0FOn1oKp"
 
@@ -21,11 +22,12 @@ def load():
     return x  
 
 settings= load()
-
+lock = Lock()
 houseTemplates=[]
 
 def parsePage(client, url, cityName, distinct = "all", area = "all", village = "all"):
     (soup, avgPrice, sailCount, in90, viewCount)=ljutils.parsePage(url)
+    global houseTemplates
     if avgPrice is None:
         return soup
     houseTemplate={}
@@ -53,10 +55,12 @@ def parsePage(client, url, cityName, distinct = "all", area = "all", village = "
     fields["in90"] = int(in90)
     fields["viewCount"] = int(viewCount)
     houseTemplate["fields"]  = fields
+    lock.acquire()
     houseTemplates.append(houseTemplate)
     if len(houseTemplates) == 10:
         client.write_points(houseTemplates)
-        houseTemplates=[]    
+        houseTemplates=[]
+    lock.release()
     return soup
     
 def parseDistinct(soup, client, city):
@@ -94,9 +98,14 @@ def parseMap(city, distinct):
     
 def parseVillage(client, city, distinct, area, distinctCode):
     villages = parseMap(city["lj"], distinctCode)
-    for village in villages:
+    with futures.ThreadPoolExecutor(max_workers=5) as executor:
+        future_to_urls = dict( (executor.submit(parsePage, None, "http://" + city["lj"] + ".lianjia.com/ershoufang/q" + village["dataId"], city["name"], distinct, area, village["showName"]), village)  for village in villages )
+
+        for future in futures.as_completed(future_to_urls):
+            future_to_urls[future]    
+    '''for village in villages:
         baseUrl = "http://" + city["lj"] + ".lianjia.com/ershoufang/q" + village["dataId"]
-        parsePage(client, baseUrl, city["name"], distinct, area, village["showName"])
+        parsePage(client, baseUrl, city["name"], distinct, area, village["showName"])'''
     pass
 
 if __name__ == '__main__':
@@ -109,5 +118,6 @@ if __name__ == '__main__':
         parseCity(client, city)
         pass
     if len(houseTemplates) > 0:
-        client.write_points(houseTemplates)    
+        client.write_points(houseTemplates)
+        pass    
     pass

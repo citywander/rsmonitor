@@ -5,11 +5,6 @@ Created on Mar 20, 2017
 
 '''
 import urllib2
-import yaml
-import socket
-import json
-import mysql.connector
-import datetime
 from bs4 import BeautifulSoup
 
 def parsePage(url):
@@ -19,7 +14,6 @@ def parsePage(url):
     spans = soup.find_all('span', {'class':'num'})
     
     try:
-        print url
         if len(spans) == 3:
             findAvg=None
         else:
