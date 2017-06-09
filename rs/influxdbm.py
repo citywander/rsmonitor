@@ -126,7 +126,7 @@ def recordDaily(cursor, dailyId):
 
 def getHouses(cursor):
     houses={}
-    query = ("SELECT id, code FROM house where saled_date is not null")
+    query = ("SELECT id, code FROM house where saled_date is not null and is_checked=0")
     cursor.execute(query)
     for (sid, code) in cursor:
         houses[code]=sid
@@ -138,14 +138,18 @@ def parseHousePage(url,code, cursor):
     soup = BeautifulSoup(html_doc.decode('utf-8','ignore'), "html.parser")
     xiajia = soup.find_all('div', attrs={'class':'tag tag_yixiajia'})
     yishixiao = soup.find_all('div', attrs={'class':'tag tag_yishixiao'})
+    cj = soup.find_all('div', attrs={'class':'pic-cj'})
     if len(xiajia) > 0 or len(yishixiao)>0:
         return
-    #updateSql="update realestate.house set saled_date=null where code='" + code + "'" 
-    #cursor.execute(updateSql)
-    #conn.commit()    
+    if len(cj) > 0:
+        return
+    print code
+    updateSql="update realestate.house set saled_date=null where code='" + code + "'" 
+    cursor.execute(updateSql)
+    conn.commit()    
 
 def influxToDb():
-    influxSql="SELECT * FROM PropertySales"
+    influxSql="select * from PropertySales where time < '2017-04-21T23:59:59.0415826Z' and time > '2017-04-21T00:00:00.0Z'"
     result = client.query(influxSql, database="RealEstate")           
     villages = getVillages(cursor)
     areas=getAreas(cursor)
@@ -322,14 +326,14 @@ if __name__ == '__main__':
     else:
         conn = mysql.connector.connect(host='10.58.80.137', port = 3306,user='root',passwd='Initial0',db='realestate')
     cursor = conn.cursor()
-    dbToInflux()
+    influxToDb()
     
     #dailyId = getRecordDate(cursor)    
     #recordDaily(cursor, dailyId)
-    #houses = getHouses(cursor)
-    #for (code, id) in houses.items():
-    #    url = "http://sh.lianjia.com/ershoufang/sh" + code +".html"
-    #    parseHousePage(url, code, cursor)
-    #cursor.close()
-    #conn.close()
+    '''houses = getHouses(cursor)
+    for (code, id) in houses.items():
+        url = "http://sh.lianjia.com/ershoufang/sh" + code +".html"
+        parseHousePage(url, code, cursor)'''
+    cursor.close()
+    conn.close()
     pass
