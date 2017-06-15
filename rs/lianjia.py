@@ -6,7 +6,7 @@ Created on Mar 20, 2017
 '''
 from concurrent import futures
 from influxdb import InfluxDBClient
-import urllib2
+from urllib.request import urlopen
 import yaml
 import socket
 import json
@@ -17,7 +17,7 @@ access_token="7poanTTBCymmgE0FOn1oKp"
 
 
 def load():
-    f = open('cities.yml')
+    f = open('cities.yml',encoding='utf-8')
     x = yaml.load(f)
     return x  
 
@@ -30,6 +30,7 @@ def parsePage(client, url, cityName, distinct = "all", area = "all", village = "
     global houseTemplates
     if avgPrice is None:
         return soup
+    print(url)
     houseTemplate={}
     houseTemplate["measurement"]="PropertySales"
     tags={}
@@ -93,19 +94,19 @@ def parseCity(client, city):
 def parseMap(city, distinct):    
     url="http://soa.dooioo.com/api/v4/online/house/ershoufang/listMapResult?access_token=%s&client=pc&cityCode=%s&type=village&dataId=%s&limit_count=10000"
     url = url % (access_token, city, distinct)
-    page = urllib2.urlopen(url)
+    page = urlopen(url)
     return json.load(page)["dataList"]
     
 def parseVillage(client, city, distinct, area, distinctCode):
     villages = parseMap(city["lj"], distinctCode)
-    with futures.ThreadPoolExecutor(max_workers=5) as executor:
-        future_to_urls = dict( (executor.submit(parsePage, None, "http://" + city["lj"] + ".lianjia.com/ershoufang/q" + village["dataId"], city["name"], distinct, area, village["showName"]), village)  for village in villages )
+    '''with futures.ThreadPoolExecutor(max_workers=5) as executor:
+        future_to_urls = dict( (executor.submit(parsePage, client, "http://" + city["lj"] + ".lianjia.com/ershoufang/q" + village["dataId"], city["name"], distinct, area, village["showName"]), village)  for village in villages )
 
         for future in futures.as_completed(future_to_urls):
-            future_to_urls[future]    
-    '''for village in villages:
+            future_to_urls[future]'''
+    for village in villages:
         baseUrl = "http://" + city["lj"] + ".lianjia.com/ershoufang/q" + village["dataId"]
-        parsePage(client, baseUrl, city["name"], distinct, area, village["showName"])'''
+        parsePage(client, baseUrl, city["name"], distinct, area, village["showName"])
     pass
 
 if __name__ == '__main__':
@@ -113,7 +114,7 @@ if __name__ == '__main__':
     if hostname == "WAGAN":
         client = InfluxDBClient('127.0.0.1', 8086, '', '', 'RealEstate')
     else:
-        client = InfluxDBClient('10.58.80.214', 8086, '', '', 'RealEstate')
+        client = InfluxDBClient('10.58.80.137', 8086, '', '', 'RealEstate')
     for city in settings["cities"]:
         parseCity(client, city)
         pass

@@ -4,11 +4,11 @@ Created on Mar 20, 2017
 @author: I076054
 
 '''
-import urllib2
+from urllib.request import urlopen
 from bs4 import BeautifulSoup
 
 def parsePage(url):
-    page = urllib2.urlopen(url)
+    page = urlopen(url)
     html_doc = page.read()
     soup = BeautifulSoup(html_doc.decode('utf-8','ignore'), "html.parser")
     spans = soup.find_all('span', {'class':'num'})

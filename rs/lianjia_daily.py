@@ -4,12 +4,12 @@ Created on Mar 20, 2017
 @author: I076054
 
 '''
-import urllib2
+from urllib.request import urlopen
 import socket
-import mysql.connector
+import MySQLdb as mysql
 import datetime
 from bs4 import BeautifulSoup
-import Queue
+import queue
 import ljutils
 
 add_daily = ("INSERT INTO daily "
@@ -20,7 +20,7 @@ add_village_daily = ("INSERT INTO village_daily "
               "(avgPrice, in90, sailCount, viewCount, village_id, daily_id)"
               "VALUES (%(avgPrice)s, %(in90)s, %(sailCount)s,%(viewCount)s,%(village_id)s, %(daily_id)s)")
 
-q=Queue.Queue(2) 
+q=queue.Queue(2) 
 
 maxProducer=2
 
@@ -53,7 +53,7 @@ def getLatestRecordDate(cursor):
     return None
     
 def parsePage(url, villageId, code, cursor, daily_id):
-    page = urllib2.urlopen(url)
+    page = urlopen(url)
     html_doc = page.read()
     soup = BeautifulSoup(html_doc.decode('utf-8','ignore'), "html.parser")
     spans = soup.find_all('span', attrs={'class':'botline'})
@@ -63,7 +63,7 @@ def parsePage(url, villageId, code, cursor, daily_id):
     try:
         findAvg = spans[0].find("strong")
     except:
-        print url
+        print(url)
         return soup
     if findAvg == None:
         avgPrice = "0"
@@ -83,7 +83,7 @@ def parsePage(url, villageId, code, cursor, daily_id):
         "village_id": villageId,
         "daily_id": daily_id
     } 
-    print url
+    print(url)
     #cursor.execute(add_village_daily, data_daily)
     #conn.commit()   
     #return soup
@@ -125,7 +125,7 @@ def getHouses(cursor):
     return houses
 
 def parseHousePage(url,code, cursor):
-    page = urllib2.urlopen(url)
+    page = urlopen(url)
     html_doc = page.read()
     soup = BeautifulSoup(html_doc.decode('utf-8','ignore'), "html.parser")
     xiajia = soup.find_all('div', attrs={'class':'tag tag_yixiajia'})
@@ -147,9 +147,9 @@ def parseHousePage(url,code, cursor):
 if __name__ == '__main__':
     hostname = socket.gethostname()
     if hostname == "WAGAN":
-        conn = mysql.connector.connect(host='192.168.1.50', port = 13306,user='root',passwd='Initial0',db='realestate')
+        conn = mysql.connect(host='192.168.1.50', port = 13306,user='root',passwd='Initial0',db='realestate',charset='utf8', use_unicode=True)
     else:
-        conn = mysql.connector.connect(host='10.58.80.214', port = 3306,user='root',passwd='Initial0',db='realestate')
+        conn = mysql.connect(host='10.58.80.137', port = 3306,user='root',passwd='Initial0',db='realestate',charset='utf8', use_unicode=True)
     cursor = conn.cursor()
     dailyId = getRecordDate(cursor)    
     recordDaily(cursor, dailyId)

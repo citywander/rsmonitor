@@ -4,11 +4,11 @@ Created on Mar 20, 2017
 @author: I076054
 
 '''
-import urllib2
+from urllib.request import urlopen
 import yaml
 import socket
 import json
-import mysql.connector
+import MySQLdb as mysql
 import datetime
 
 access_token="7poanTTBCymmgE0FOn1oKp"
@@ -39,7 +39,7 @@ update_house = ("UPDATE house "
 
 
 def load():
-    f = open('cities.yml')
+    f = open('cities.yml',encoding='utf-8')
     x = yaml.load(f)
     return x  
 
@@ -48,7 +48,7 @@ settings= load()
 def parseMap(city, dateId, siteType, type):    
     url="http://soa.dooioo.com/api/v4/online/house/ershoufang/listMapResult?access_token=%s&client=pc&cityCode=%s&siteType=%s&type=%s&dataId=%s&limit_count=10000"
     url = url % (access_token, city, siteType, type, dateId)
-    page = urllib2.urlopen(url)
+    page = urlopen(url)
     return json.load(page)["dataList"]
     
 def insertDistrict(cursor):
@@ -95,7 +95,7 @@ def insertVillage():
     for (k,v) in areas_dict.items():
         areas = parseMap("sh", k, "quyu", "village")
         if k=="beicai":
-            print areas
+            print(areas)
         for area in areas:
             code = area["dataId"]
             if code in villages.keys():
@@ -127,7 +127,7 @@ def updateDetailVillage():
     for (k,v) in villages.items():
         url="http://soa.dooioo.com/api/v4/online/house/ershoufang/search?access_token=%s&cityCode=sh&community_id=%s&limit_offset=1&limit_count=1500"
         url = url % (access_token, k)
-        page = urllib2.urlopen(url)
+        page = urlopen(url)
         prop = json.load(page)["data"]["property"]
         if not "devCompany" in prop:
             prop["devCompany"] = ""
@@ -167,7 +167,7 @@ def insertHouse():
     for (k,v) in villages.items():
         url="http://soa.dooioo.com/api/v4/online/house/ershoufang/search?access_token=%s&client=pc&cityCode=sh&community_id=%s&limit_offset=1&limit_count=10000"
         url = url % (access_token, k)
-        page = urllib2.urlopen(url)
+        page = urlopen(url)
         properties = json.load(page)["data"]["list"]
         for prop in properties:
             code = prop["houseSellId"]
@@ -208,9 +208,9 @@ def insertHouse():
 if __name__ == '__main__':
     hostname = socket.gethostname()
     if hostname == "WAGAN":
-        conn = mysql.connector.connect(host='192.168.1.50', port = 13306,user='root',passwd='Initial0',db='realestate')
+        conn = mysql.connect(host='192.168.1.50', port = 13306,user='root',passwd='Initial0',db='realestate', charset='utf8', use_unicode=True)
     else:
-        conn = mysql.connector.connect(host='10.58.80.214', port = 3306,user='root',passwd='Initial0',db='realestate')
+        conn = mysql.connect(host='10.58.80.137', port = 3306,user='root',passwd='Initial0',db='realestate', charset='utf8', use_unicode=True)
     cursor = conn.cursor()
     insertHouse()
     conn.commit()

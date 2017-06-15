@@ -4,10 +4,10 @@ Created on Mar 20, 2017
 @author: I076054
 
 '''
-import urllib2
+from urllib.request import urlopen
 import yaml
 import socket
-import mysql.connector
+import MySQLdb as mysql
 import datetime
 from bs4 import BeautifulSoup
 from influxdb import InfluxDBClient
@@ -72,7 +72,7 @@ def getLatestRecordDate(cursor):
     return None
     
 def parsePage(url, villageId, code, cursor, daily_id):
-    page = urllib2.urlopen(url)
+    page = urlopen(url)
     html_doc = page.read()
     soup = BeautifulSoup(html_doc.decode('utf-8','ignore'), "html.parser")
     spans = soup.find_all('span', attrs={'class':'botline'})
@@ -82,7 +82,7 @@ def parsePage(url, villageId, code, cursor, daily_id):
     try:
         findAvg = spans[0].find("strong")
     except:
-        print url
+        print(url)
         return soup
     if findAvg == None:
         avgPrice = "0"
@@ -133,7 +133,7 @@ def getHouses(cursor):
     return houses
 
 def parseHousePage(url,code, cursor):
-    page = urllib2.urlopen(url)
+    page = urlopen(url)
     html_doc = page.read()
     soup = BeautifulSoup(html_doc.decode('utf-8','ignore'), "html.parser")
     xiajia = soup.find_all('div', attrs={'class':'tag tag_yixiajia'})
@@ -143,13 +143,13 @@ def parseHousePage(url,code, cursor):
         return
     if len(cj) > 0:
         return
-    print code
+    print(code)
     updateSql="update realestate.house set saled_date=null where code='" + code + "'" 
     cursor.execute(updateSql)
     conn.commit()    
 
 def influxToDb():
-    influxSql="select * from PropertySales where time < '2017-04-21T23:59:59.0415826Z' and time > '2017-04-21T00:00:00.0Z'"
+    influxSql="select * from PropertySales where time < '2017-05-18T23:59:59.0415826Z' and time > '2017-05-17T00:00:00.0Z'"
     result = client.query(influxSql, database="RealEstate")           
     villages = getVillages(cursor)
     areas=getAreas(cursor)
@@ -322,9 +322,9 @@ if __name__ == '__main__':
     else:
         client = InfluxDBClient('10.58.80.137', 8086, '', '', 'RealEstate')    
     if hostname == "WAGAN":
-        conn = mysql.connector.connect(host='192.168.1.50', port = 13306,user='root',passwd='Initial0',db='realestate')
+        conn = mysql.connect(host='192.168.1.50', port = 13306,user='root',passwd='Initial0',db='realestate')
     else:
-        conn = mysql.connector.connect(host='10.58.80.137', port = 3306,user='root',passwd='Initial0',db='realestate')
+        conn = mysql.connect(host='10.58.80.137', port = 3306,user='root',passwd='Initial0',db='realestate')
     cursor = conn.cursor()
     influxToDb()
     
